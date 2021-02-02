@@ -83,3 +83,23 @@ class ChatStack(Gtk.Stack):
 
     def clear(self):
         self.set_visible_child_name('empty')
+
+    def update(self, event):
+        if not event.msgtxt:
+            return
+
+        control = self.get_control(event.account, event.jid)
+
+        typ = ''
+        if event.properties.is_sent_carbon:
+            typ = 'out'
+
+        control.add_message(event.msgtxt,
+                            typ,
+                            tim=event.properties.timestamp,
+                            subject=event.properties.subject,
+                            displaymarking=event.displaymarking,
+                            msg_log_id=event.msg_log_id,
+                            message_id=event.properties.id,
+                            correct_id=event.correct_id,
+                            additional_data=event.additional_data)
