@@ -245,6 +245,9 @@ class MainWindow(Gtk.ApplicationWindow):
         if not self.chat_exists(event.account, event.jid):
             self.add_chat(event.account, event.jid, 'contact')
 
+        if not event.msgtxt:
+            return
+
         self._chat_stack.update(event)
         self._chat_list_stack.update(event)
 

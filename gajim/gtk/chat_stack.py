@@ -85,9 +85,6 @@ class ChatStack(Gtk.Stack):
         self.set_visible_child_name('empty')
 
     def update(self, event):
-        if not event.msgtxt:
-            return
-
         control = self.get_control(event.account, event.jid)
 
         typ = ''

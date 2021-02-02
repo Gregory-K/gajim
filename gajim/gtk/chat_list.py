@@ -93,7 +93,7 @@ class ChatList(Gtk.ListBox):
     def update(self, event):
         row = self._chats.get((event.account, event.jid))
         row.add_unread()
-        row.set_last_message_text('Me', event.msgtext)
+        row.set_last_message_text('Me', event.msgtxt)
 
 
 class ChatRow(Gtk.ListBoxRow):
