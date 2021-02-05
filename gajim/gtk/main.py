@@ -77,6 +77,7 @@ class MainWindow(Gtk.ApplicationWindow, EventHelper):
             ('caps-update', ged.GUI1, self._on_event),
             ('message-sent', ged.OUT_POSTCORE, self._on_event),
             ('message-received', ged.CORE, self._on_event),
+            ('mam-message-received', ged.CORE, self._on_event),
             ('receipt-received', ged.GUI1, self._on_event),
             ('displayed-received', ged.GUI1, self._on_event),
             ('message-error', ged.GUI1, self._on_event),

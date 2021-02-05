@@ -128,6 +128,9 @@ class ChatList(Gtk.ListBox):
             log.warning('Unhandled Event: %s', event.name)
 
     def _on_message_received(self, event):
+        if not event.msgtxt:
+            return
+
         row = self._chats.get((event.account, event.jid))
         if not (row.is_selected() and
                 self.get_toplevel().get_property('has-toplevel-focus')):

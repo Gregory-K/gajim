@@ -567,6 +567,9 @@ class ChatControl(ChatControlBase):
                          additional_data=event.additional_data)
 
     def _on_message_received(self, event):
+        if not event.msgtxt:
+            return
+
         typ = ''
         if event.properties.is_sent_carbon:
             typ = 'out'
@@ -608,16 +611,16 @@ class ChatControl(ChatControlBase):
                          correct_id=event.correct_id,
                          additional_data=event.additional_data)
 
-    def _receipt_received(self, event):
+    def _on_receipt_received(self, event):
         self.conv_textview.show_receipt(event.receipt_id)
 
-    def _displayed_received(self, event):
+    def _on_displayed_received(self, event):
         self.conv_textview.show_displayed(event.marker_id)
 
     def _on_zeroconf_error(self, event):
         self.add_status_message(event.message)
 
-    def _on_update_roster_avatar(self, obj):
+    def _on_update_roster_avatar(self, _event):
         self._update_avatar()
 
     def _nec_ping(self, event):
