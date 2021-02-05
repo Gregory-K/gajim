@@ -124,7 +124,9 @@ class ChatList(Gtk.ListBox):
             row.update_time()
 
     def process_event(self, event):
-        if event.name == 'message-received':
+        if event.name in ('message-received',
+                          'mam-message-received',
+                          'gc-message-received'):
             self._on_message_received(event)
         else:
             log.warning('Unhandled Event: %s', event.name)

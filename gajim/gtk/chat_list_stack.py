@@ -7,7 +7,9 @@ from gajim.gui.chat_list import ChatList
 
 
 HANDLED_EVENTS = [
-    'message-received'
+    'message-received',
+    'mam-message-received',
+    'gc-message-received',
 ]
 
 
