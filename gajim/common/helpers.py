@@ -796,7 +796,7 @@ def get_accounts_info():
     Helper for notification icon tooltip
     """
     accounts = []
-    accounts_list = sorted(app.contacts.get_accounts())
+    accounts_list = sorted(app.settings.get_active_accounts())
     for account in accounts_list:
 
         status = get_connection_status(account)
@@ -1253,7 +1253,7 @@ def get_groupchat_name(con, jid):
         if disco_info.muc_name:
             return disco_info.muc_name
 
-    return jid.split('@')[0]
+    return jid.localpart
 
 
 def is_affiliation_change_allowed(self_contact, contact, target_aff):
@@ -1309,6 +1309,10 @@ class Observable:
             weak_func = weakref.ref(func)
 
         self._callbacks[signal_name][qualifiers].append(weak_func)
+
+    def multi_connect(self, signal_dict):
+        for signal_name, func in signal_dict.items():
+            self.connect(signal_name, func)
 
     def notify(self, signal_name, *args, qualifiers=None, **kwargs):
         if self._log is not None:
