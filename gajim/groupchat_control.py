@@ -307,7 +307,6 @@ class GroupchatControl(ChatControlBase):
             ('rename-groupchat-', None, self._on_rename_groupchat),
             ('change-subject-', None, self._on_change_subject),
             ('change-nickname-', None, self._on_change_nick),
-            ('disconnect-', None, self._on_disconnect),
             ('destroy-', None, self._on_destroy_room),
             ('configure-', None, self._on_configure_room),
             ('request-voice-', None, self._on_request_voice),
@@ -476,9 +475,6 @@ class GroupchatControl(ChatControlBase):
         self.draw_banner_text()
 
     # Actions
-    def _on_disconnect(self, _action, _param):
-        self.leave()
-
     def _on_information(self, _action, _param):
         self._muc_info_box.set_from_disco_info(self.disco_info)
         if self._subject_data is not None:
@@ -1006,12 +1002,6 @@ class GroupchatControl(ChatControlBase):
 
         self.update_actions()
 
-    def leave(self, reason=None):
-        self.got_disconnected()
-        self._close_control(reason=reason)
-        app.connections[self.account].get_module('MUC').leave(
-            self.room_jid, reason=reason)
-
     def rejoin(self):
         app.connections[self.account].get_module('MUC').join(self._muc_data)
 
@@ -1390,6 +1380,8 @@ class GroupchatControl(ChatControlBase):
         app.settings.disconnect_signals(self)
         self.contact.disconnect(self)
 
+        client = app.get_client(self.account)
+        client.get_module('MUC').get_manager().disconnect(self)
         # PluginSystem: removing GUI extension points connected with
         # GrouphatControl instance object
         app.plugin_manager.remove_gui_extension_point(
