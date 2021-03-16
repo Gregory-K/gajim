@@ -261,15 +261,14 @@ class GroupchatControl(ChatControlBase):
             self.is_connected = False
             ChatControlBase.got_disconnected(self)
 
-            con = app.connections[self.account]
-            con.get_module('Chatstate').remove_delay_timeout(self.contact)
+            self._client.get_module('Chatstate').remove_delay_timeout(
+                self.contact)
 
             self.update_actions()
 
     @property
     def _muc_data(self):
-        client = app.get_client(self.account)
-        return client.get_module('MUC').get_muc_data(self.room_jid)
+        return self._client.get_module('MUC').get_muc_data(self.room_jid)
 
     @property
     def _nick_completion(self):
@@ -329,7 +328,6 @@ class GroupchatControl(ChatControlBase):
             return
 
         contact = self.contact.get_resource(self.nick)
-        con = app.connections[self.account]
 
         # Destroy Room
         self._get_action('destroy-').set_enabled(self.is_connected and
@@ -363,12 +361,12 @@ class GroupchatControl(ChatControlBase):
         httpupload = self._get_action(
             'send-file-httpupload-')
         httpupload.set_enabled(self.is_connected and
-                               con.get_module('HTTPUpload').available)
+                               self._client.get_module('HTTPUpload').available)
         self._get_action('send-file-').set_enabled(httpupload.get_enabled())
 
         if self.is_connected and httpupload.get_enabled():
             tooltip_text = _('Send File…')
-            max_file_size = con.get_module('HTTPUpload').max_file_size
+            max_file_size = self._client.get_module('HTTPUpload').max_file_size
             if max_file_size is not None:
                 max_file_size = max_file_size / (1024 * 1024)
                 tooltip_text = _('Send File (max. %s MiB)…') % max_file_size
@@ -503,8 +501,8 @@ class GroupchatControl(ChatControlBase):
         self._show_page('groupchat')
 
     def invite(self, contact_jid):
-        con = app.connections[self.account]
-        message_id = con.get_module('MUC').invite(self.room_jid, contact_jid)
+        message_id = self._client.get_module('MUC').invite(
+            self.room_jid, contact_jid)
         self.add_info_message(
             _('%s has been invited to this group chat') % contact_jid,
             message_id=message_id)
@@ -536,8 +534,7 @@ class GroupchatControl(ChatControlBase):
         reason = self.xml.destroy_reason_entry.get_text()
         jid = self.xml.destroy_alternate_entry.get_text()
         self._wait_for_destruction = True
-        con = app.connections[self.account]
-        con.get_module('MUC').destroy(self.room_jid, reason, jid)
+        self._client.get_module('MUC').destroy(self.room_jid, reason, jid)
         self._show_page('groupchat')
 
     def _on_configure_room(self, _action, _param):
@@ -548,8 +545,7 @@ class GroupchatControl(ChatControlBase):
 
         contact = self.contact.get_resource(self.nick)
         if contact.affiliation.is_owner:
-            con = app.connections[self.account]
-            con.get_module('MUC').request_config(
+            self._client.get_module('MUC').request_config(
                 self.room_jid, callback=self._on_configure_form_received)
 
         elif contact.affiliation.is_admin:
@@ -569,8 +565,7 @@ class GroupchatControl(ChatControlBase):
         """
         Request voice in the current room
         """
-        con = app.connections[self.account]
-        con.get_module('MUC').request_voice(self.room_jid)
+        self._client.get_module('MUC').request_voice(self.room_jid)
 
     def _on_execute_command(self, _action, param):
         jid = self.room_jid
@@ -590,8 +585,7 @@ class GroupchatControl(ChatControlBase):
             vcard = VCard()
             vcard.set_avatar(data, 'image/png')
 
-            con = app.connections[self.account]
-            con.get_module('VCardTemp').set_vcard(
+            self._client.get_module('VCardTemp').set_vcard(
                 vcard,
                 jid=self.room_jid,
                 callback=self._on_upload_avatar_result)
@@ -634,13 +628,11 @@ class GroupchatControl(ChatControlBase):
 
     def _on_change_role(self, _action, param):
         nick, role = param.get_strv()
-        con = app.connections[self.account]
-        con.get_module('MUC').set_role(self.room_jid, nick, role)
+        self._client.get_module('MUC').set_role(self.room_jid, nick, role)
 
     def _on_change_affiliation(self, _action, param):
         jid, affiliation = param.get_strv()
-        con = app.connections[self.account]
-        con.get_module('MUC').set_affiliation(
+        self._client.get_module('MUC').set_affiliation(
             self.room_jid,
             {jid: {'affiliation': affiliation}})
 
@@ -667,8 +659,7 @@ class GroupchatControl(ChatControlBase):
                                         self.get_full_jid(),
                                         types=type_):
             # XEP-0333 Send <displayed> marker
-            con = app.connections[self.account]
-            con.get_module('ChatMarkers').send_displayed_marker(
+            self._client.get_module('ChatMarkers').send_displayed_marker(
                 self.contact,
                 self.last_msg_id,
                 self._type)
@@ -709,9 +700,8 @@ class GroupchatControl(ChatControlBase):
         voice_request = properties.voice_request
 
         def on_approve():
-            con = app.connections[self.account]
-            con.get_module('MUC').approve_voice_request(self.room_jid,
-                                                        voice_request)
+            self._client.get_module('MUC').approve_voice_request(
+                self.room_jid, voice_request)
 
         ConfirmationDialog(
             _('Voice Request'),
@@ -864,8 +854,7 @@ class GroupchatControl(ChatControlBase):
         """
         special_words = app.settings.get('muc_highlight_words').split(';')
         special_words.append(self.nick)
-        con = app.connections[self.account]
-        special_words.append(con.get_own_jid().bare)
+        special_words.append(self._client.get_own_jid().bare)
         # Strip empties: ''.split(';') == [''] and would highlight everything.
         # Also lowercase everything for case insensitive compare.
         special_words = [word.lower() for word in special_words if word]
@@ -920,8 +909,7 @@ class GroupchatControl(ChatControlBase):
         if StatusCode.CONFIG_NON_PRIVACY_RELATED in status_codes:
             changes.append(_('A setting not related to privacy has been '
                              'changed'))
-            app.connections[self.account].get_module('Discovery').disco_muc(
-                self.room_jid)
+            self._client.get_module('Discovery').disco_muc(self.room_jid)
 
         if StatusCode.CONFIG_ROOM_LOGGING in status_codes:
             # Can be a presence (see chg_contact_status in groupchat_control.py)
@@ -986,13 +974,12 @@ class GroupchatControl(ChatControlBase):
         self.is_connected = False
         ChatControlBase.got_disconnected(self)
 
-        con = app.connections[self.account]
-        con.get_module('Chatstate').remove_delay_timeout(self.contact)
+        self._client.get_module('Chatstate').remove_delay_timeout(self.contact)
 
         self.update_actions()
 
     def rejoin(self):
-        app.connections[self.account].get_module('MUC').join(self._muc_data)
+        self._client.get_module('MUC').join(self._muc_data)
 
     # def send_pm(self, nick, message=None):
     #     ctrl = self._start_private_message(nick)
@@ -1263,8 +1250,7 @@ class GroupchatControl(ChatControlBase):
         self._show_page('password')
 
     def _on_room_join_failed(self, _contact, _signal_name, error):
-        con = app.connections[self.account]
-        if con.get_module('Bookmarks').is_bookmark(self.room_jid):
+        if self._client.get_module('Bookmarks').is_bookmark(self.room_jid):
             self.xml.remove_bookmark_button.show()
 
         self.xml.error_heading.set_text(_('Failed to Join Group Chat'))
@@ -1297,8 +1283,7 @@ class GroupchatControl(ChatControlBase):
 
         self.got_disconnected()
 
-        con = app.connections[self.account]
-        con.get_module('Bookmarks').remove(self.room_jid)
+        self._client.get_module('Bookmarks').remove(self.room_jid)
 
         if self._wait_for_destruction:
             self._close_control()
@@ -1344,8 +1329,7 @@ class GroupchatControl(ChatControlBase):
                 correct_id = self.last_sent_msg
             else:
                 correct_id = None
-            con = app.connections[self.account]
-            chatstate = con.get_module('Chatstate').get_active_chatstate(
+            chatstate = self._client.get_module('Chatstate').get_active_chatstate(
                 self.contact)
 
             # Send the message
@@ -1357,7 +1341,7 @@ class GroupchatControl(ChatControlBase):
                                        chatstate=chatstate,
                                        correct_id=correct_id)
             message_.additional_data.set_value('gajim', 'xhtml', xhtml)
-            con.send_message(message_)
+            self._client.send_message(message_)
 
             self.msg_textview.get_buffer().set_text('')
             self.msg_textview.grab_focus()
@@ -1544,8 +1528,8 @@ class GroupchatControl(ChatControlBase):
                 else:
                     start_iter.backward_chars(len(begin))
 
-                con = app.connections[self.account]
-                con.get_module('Chatstate').block_chatstates(self.contact, True)
+                self._client.get_module('Chatstate').block_chatstates(
+                    self.contact, True)
 
                 message_buffer.delete(start_iter, end_iter)
                 # get a shell-like completion
@@ -1577,8 +1561,8 @@ class GroupchatControl(ChatControlBase):
                     completion = self.nick_hits[0]
                 message_buffer.insert_at_cursor(completion + add)
 
-                con.get_module('Chatstate').block_chatstates(self.contact,
-                                                             False)
+                self._client.get_module('Chatstate').block_chatstates(
+                    self.contact, False)
 
                 self.last_key_tabs = True
                 return True
@@ -1660,15 +1644,13 @@ class GroupchatControl(ChatControlBase):
 
     def _on_kick_participant_clicked(self, _button):
         reason = self.xml.kick_reason_entry.get_text()
-        con = app.connections[self.account]
-        con.get_module('MUC').set_role(
+        self._client.get_module('MUC').set_role(
             self.room_jid, self._kick_nick, 'none', reason)
         self._show_page('groupchat')
 
     def _on_ban_participant_clicked(self, _button):
         reason = self.xml.ban_reason_entry.get_text()
-        con = app.connections[self.account]
-        con.get_module('MUC').set_affiliation(
+        self._client.get_module('MUC').set_affiliation(
             self.room_jid,
             {self._ban_jid: {'affiliation': 'outcast', 'reason': reason}})
         self._show_page('groupchat')
@@ -1714,8 +1696,7 @@ class GroupchatControl(ChatControlBase):
 
     def _on_nickname_change_clicked(self, _button):
         new_nick = self.xml.nickname_entry.get_text()
-        app.connections[self.account].get_module('MUC').change_nick(
-            self.room_jid, new_nick)
+        self._client.get_module('MUC').change_nick(self.room_jid, new_nick)
         self._show_page('groupchat')
 
     def _on_rename_groupchat(self, _action, _param):
@@ -1728,7 +1709,7 @@ class GroupchatControl(ChatControlBase):
 
     def _on_rename_clicked(self, _button):
         new_name = self.xml.name_entry.get_text()
-        app.connections[self.account].get_module('Bookmarks').modify(
+        self._client.get_module('Bookmarks').modify(
             self.room_jid, name=new_name)
         self._show_page('groupchat')
 
@@ -1744,14 +1725,13 @@ class GroupchatControl(ChatControlBase):
         subject = buffer_.get_text(buffer_.get_start_iter(),
                                    buffer_.get_end_iter(),
                                    False)
-        con = app.connections[self.account]
-        con.get_module('MUC').set_subject(self.room_jid, subject)
+        self._client.get_module('MUC').set_subject(self.room_jid, subject)
         self._show_page('groupchat')
 
     def _on_password_set_clicked(self, _button):
         password = self.xml.password_entry.get_text()
         self._muc_data.password = password
-        app.connections[self.account].get_module('MUC').join(self._muc_data)
+        self._client.get_module('MUC').join(self._muc_data)
         self._show_page('progress')
 
     def _on_password_changed(self, entry, _param):
@@ -1798,28 +1778,25 @@ class GroupchatControl(ChatControlBase):
 
     def _on_captcha_set_clicked(self, _button):
         form_node = self._captcha_request.get_submit_form()
-        con = app.connections[self.account]
-        con.get_module('MUC').send_captcha(self.room_jid, form_node)
+        self._client.get_module('MUC').send_captcha(self.room_jid, form_node)
         self._remove_captcha_request()
         self._show_page('progress')
 
     def _on_captcha_cancel_clicked(self, _button=None):
-        con = app.connections[self.account]
-        con.get_module('MUC').cancel_captcha(self.room_jid)
+        self._client.get_module('MUC').cancel_captcha(self.room_jid)
         self._remove_captcha_request()
         self._close_control()
 
     def _on_captcha_try_again_clicked(self, _button=None):
-        app.connections[self.account].get_module('MUC').join(self._muc_data)
+        self._client.get_module('MUC').join(self._muc_data)
         self._show_page('progress')
 
     def _on_remove_bookmark_button_clicked(self, _button=None):
-        con = app.connections[self.account]
-        con.get_module('Bookmarks').remove(self.room_jid)
+        self._client.get_module('Bookmarks').remove(self.room_jid)
         self._close_control()
 
     def _on_retry_join_clicked(self, _button=None):
-        app.connections[self.account].get_module('MUC').join(self._muc_data)
+        self._client.get_module('MUC').join(self._muc_data)
         self._show_page('progress')
 
     def _on_page_cancel_clicked(self, _button=None):
