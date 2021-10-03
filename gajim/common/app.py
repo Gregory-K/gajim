@@ -34,7 +34,6 @@ import gc
 import os
 import sys
 import logging
-import uuid
 import weakref
 from collections import namedtuple
 from collections import defaultdict
@@ -327,9 +326,6 @@ def detect_desktop_env():
     return desktop
 
 desktop_env = detect_desktop_env()
-
-def get_an_id():
-    return str(uuid.uuid4())
 
 
 def get_server_from_jid(jid):
