@@ -789,7 +789,7 @@ class GroupchatControl(BaseControl):
         if self.contact.jid != event.contact.room_jid:
             return
 
-        nick = event.contact.get_shown_name()
+        nick = event.contact.name
         if event.name == 'ping-sent':
             self.add_info_message(_('Ping? (%s)') % nick)
         elif event.name == 'ping-reply':
@@ -883,13 +883,6 @@ class GroupchatControl(BaseControl):
             self._nick_completion.contact_renamed(nick, new_nick)
 
         self.add_info_message(message)
-
-        # TODO: What to do with this?
-        # tv = self.conv_textview
-        # if nick in tv.last_received_message_id:
-        #     tv.last_received_message_id[new_nick] = \
-        #         tv.last_received_message_id[nick]
-        #     del tv.last_received_message_id[nick]
 
     def _on_user_status_show_changed(self,
                                      _contact,
