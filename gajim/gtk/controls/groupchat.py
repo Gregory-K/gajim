@@ -40,7 +40,8 @@ from gi.repository import Gdk
 from gi.repository import GLib
 from gi.repository import Gio
 
-from gajim import gui_menu_builder
+from gajim.gui_menu_builder import get_encryption_menu
+from gajim.gui_menu_builder import get_groupchat_menu
 
 from gajim.common import app
 from gajim.common import ged
@@ -142,8 +143,8 @@ class GroupchatControl(BaseControl):
         # Encryption
         self.set_lock_image()
 
-        self.xml.encryption_menu.set_menu_model(
-            gui_menu_builder.get_encryption_menu(self.control_id, self._type))
+        self.xml.encryption_menu.set_menu_model(get_encryption_menu(
+            self.control_id, self._type))
         self.set_encryption_menu_icon()
 
         # Banner
@@ -175,9 +176,9 @@ class GroupchatControl(BaseControl):
         self.xml.invite_grid.attach(self._invite_box, 0, 0, 1, 1)
         self._invite_box.connect('listbox-changed', self._on_invite_ready)
 
-        self.control_menu = gui_menu_builder.get_groupchat_menu(self.control_id,
-                                                                self.account,
-                                                                self.room_jid)
+        self.control_menu = get_groupchat_menu(self.control_id,
+                                               self.account,
+                                               self.room_jid)
 
         self.xml.settings_menu.set_menu_model(self.control_menu)
 
@@ -322,7 +323,8 @@ class GroupchatControl(BaseControl):
                                                         subject_change)
 
         # Change Nick
-        self._get_action('change-nickname-').set_enabled(joined)
+        self._get_action('change-nickname-').set_enabled(
+            joined and not self.is_irc())
 
         # Execute command
         self._get_action('execute-command-').set_enabled(joined)
@@ -390,6 +392,11 @@ class GroupchatControl(BaseControl):
 
         for action in actions:
             app.window.remove_action(f'{action}{self.control_id}')
+
+    def is_irc(self) -> bool:
+        if self.disco_info is None:
+            return False
+        return self.disco_info.is_irc
 
     def _is_subject_change_allowed(self):
         contact = self.contact.get_self()
